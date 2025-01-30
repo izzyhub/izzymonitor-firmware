@@ -1,6 +1,6 @@
 [package]
 edition = "2021"
-name    = "izzymonitor-no-std"
+name = "izzymonitor-no-std"
 version = "0.1.0"
 
 [[bin]]
@@ -34,7 +34,7 @@ esp-wifi = { version = "0.12.0", default-features = false, features = [
   "utils",
   "wifi",
 ] }
-heapless = { version = "0.8.0", default-features = false }
+heapless = { version = "0.7.17", default-features = false }
 log = { version = "0.4.21" }
 smoltcp = { version = "0.12.0", default-features = false, features = [
   "medium-ethernet",
@@ -58,6 +58,10 @@ embassy-executor = { version = "0.7.0", features = ["task-arena-size-20480"] }
 embassy-time = { version = "0.4.0", features = ["generic-queue-8"] }
 esp-hal-embassy = { version = "0.6.0", features = ["esp32s3"] }
 static_cell = { version = "2.1.0", features = ["nightly"] }
+smart-leds = "0.4.0"
+ws2812-spi = "0.5.0"
+#esp-hal-smartled = { git = "https://github.com/esp-rs/esp-hal-community" }
+esp-hal-smartled = { git = "https://github.com/esp-rs/esp-hal-community/" }
 
 [profile.dev]
 # Rust debug is too slow.
@@ -65,10 +69,10 @@ static_cell = { version = "2.1.0", features = ["nightly"] }
 opt-level = "s"
 
 [profile.release]
-codegen-units    = 1     # LLVM can perform better optimizations using a single thread
-debug            = 2
+codegen-units = 1        # LLVM can perform better optimizations using a single thread
+debug = 2
 debug-assertions = false
-incremental      = false
-lto              = 'fat'
-opt-level        = 's'
-overflow-checks  = false
+incremental = false
+lto = 'fat'
+opt-level = 's'
+overflow-checks = false
