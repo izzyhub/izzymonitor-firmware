@@ -15,6 +15,7 @@ use smart_leds::{
     brightness, gamma,
     hsv::{hsv2rgb, Hsv},
     SmartLedsWrite,
+    RGB8,
 };
 use ws2812_spi::Ws2812;
 
@@ -57,7 +58,8 @@ async fn main(spawner: Spawner) {
     let rmt = Rmt::new(peripherals.RMT, freq).unwrap();
 
     info!("creating buffer??");
-    let rmt_buffer = smartLedBuffer!(2);
+    const LED_COUNT: usize = 6;
+    let rmt_buffer = smartLedBuffer!(6);
     info!("created buffer??");
     let mut led = SmartLedsAdapter::new(rmt.channel0, led_pin, rmt_buffer);
     info!("created adapter");
@@ -67,23 +69,25 @@ async fn main(spawner: Spawner) {
         val: 255,
     };
 
-
     // TODO: Spawn some tasks
-    let mut data;
+    let mut data: [RGB8; LED_COUNT] = [(0, 0, 0).into(); LED_COUNT];
+
     let _ = spawner;
     loop {
         info!("looping");
         for hue in 0..=255 {
-            info!("hue: {hue:#?}");
-            color.hue = hue;
             // Convert from the HSV color space (where we can easily transition from one
             // color to the other) to the RGB color space that we can then send to the LED
-            data = [hsv2rgb(color)];
             // When sending to the LED, we do a gamma correction first (see smart_leds
             // documentation for details) and then limit the brightness to 10 out of 255 so
             // that the output it's not too bright.
             info!("writing to led");
-            match led.write(brightness(gamma(data.iter().cloned()), 255)) {
+            for i in 0..LED_COUNT {
+                info!("hue: {hue:#?}");
+                color.hue = hue * (i as u8);
+                data[i] = hsv2rgb(color);
+            }
+            match led.write(brightness(gamma(data.iter().cloned()), 100)) {
                 Ok(_) => {
                     debug!("write success")
                 },
@@ -91,6 +95,7 @@ async fn main(spawner: Spawner) {
                     error!("error: {error:#?}");
                 }
             }
+
             info!("wrote to led");
             Timer::after(Duration::from_millis(20)).await;
         }
