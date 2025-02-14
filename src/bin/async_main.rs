@@ -8,7 +8,7 @@ use embassy_time::{Duration, Timer};
 use esp_backtrace as _;
 use esp_hal::{rmt::Rmt, time::RateExtU32};
 use esp_hal::clock::CpuClock;
-use esp_hal::gpio::{Level, Output};
+use esp_hal::gpio::{Pull, Level, Input, Output};
 use log::{debug, info, error};
 use esp_hal_smartled::{smartLedBuffer, SmartLedsAdapter};
 use smart_leds::{
@@ -20,6 +20,33 @@ use smart_leds::{
 use ws2812_spi::Ws2812;
 
 extern crate alloc;
+
+#[embassy_executor::task]
+async fn blink_backlight(mut backlight_pin: Output<'static>) {
+    loop {
+        Timer::after(Duration::from_secs(1)).await;
+        info!("Hello world!");
+        backlight_pin.toggle();
+    }
+}
+
+#[embassy_executor::task]
+async fn watch_key(mut key_pin: Input<'static>) {
+    loop {
+        let mut del_var = 2000;
+
+        key_pin.wait_for_rising_edge().await;
+        info!("key press??");
+        del_var = del_var - 300;
+        // If updated delay value drops below 300 then reset it back to starting value
+        if del_var < 500 {
+            del_var = 2000;
+        }
+        info!("surpased delay value");
+        // Pub
+    }
+
+}
 
 #[esp_hal_embassy::main]
 async fn main(spawner: Spawner) {
@@ -69,21 +96,39 @@ async fn main(spawner: Spawner) {
         val: 255,
     };
 
-    // TODO: Spawn some tasks
     let mut data: [RGB8; LED_COUNT] = [(0, 0, 0).into(); LED_COUNT];
 
-    let _ = spawner;
+    //let _ = spawner;
+    let res = spawner.spawn(blink_backlight(backlight));
+    match res {
+        Ok(_) => info!("spawned successfully"),
+        Err(error) => error!("Error spawning task: {error}"),
+    }
+
+    let mut key1 = Input::new(peripherals.GPIO14, Pull::Up);
+    let res = spawner.spawn(watch_key(key1));
+    match res {
+        Ok(_) => info!("spawned successfully"),
+        Err(error) => error!("Error spawning task: {error}"),
+    }
+    let mut key2 = Input::new(peripherals.GPIO21, Pull::Up);
+    let res = spawner.spawn(watch_key(key1));
+    match res {
+        Ok(_) => info!("spawned successfully"),
+        Err(error) => error!("Error spawning task: {error}"),
+    }
+
     loop {
-        info!("looping");
+        //info!("looping");
         for hue in 0..=255 {
             // Convert from the HSV color space (where we can easily transition from one
             // color to the other) to the RGB color space that we can then send to the LED
             // When sending to the LED, we do a gamma correction first (see smart_leds
             // documentation for details) and then limit the brightness to 10 out of 255 so
             // that the output it's not too bright.
-            info!("writing to led");
+            //info!("writing to led");
             for i in 0..LED_COUNT {
-                info!("hue: {hue:#?}");
+                //info!("hue: {hue:#?}");
                 color.hue = hue * (i as u8);
                 data[i] = hsv2rgb(color);
             }
@@ -96,13 +141,10 @@ async fn main(spawner: Spawner) {
                 }
             }
 
-            info!("wrote to led");
+            //info!("wrote to led");
             Timer::after(Duration::from_millis(20)).await;
         }
 
-        info!("Hello world!");
-        backlight.toggle();
-        Timer::after(Duration::from_secs(1)).await;
     }
 
     // for inspiration have a look at the examples at https://github.com/esp-rs/esp-hal/tree/v0.23.1/examples/src/bin
