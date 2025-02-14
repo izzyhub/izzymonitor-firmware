@@ -30,12 +30,12 @@ async fn blink_backlight(mut backlight_pin: Output<'static>) {
     }
 }
 
-async fn key_watcher(mut key_pin: Input<'static>) {
+async fn key_watcher(mut key_pin: Input<'static>, key_name: &'static str) {
     loop {
         let mut del_var = 2000;
 
         key_pin.wait_for_falling_edge().await;
-        info!("key press??");
+        info!("pressed {key_name}");
         del_var = del_var - 300;
         // If updated delay value drops below 300 then reset it back to starting value
         if del_var < 500 {
@@ -47,13 +47,33 @@ async fn key_watcher(mut key_pin: Input<'static>) {
 }
 
 #[embassy_executor::task]
-async fn watch_key(mut key_pin: Input<'static>) {
-    key_watcher(key_pin).await
+async fn watch_key(mut key_pin: Input<'static>, key_name: &'static str) {
+    key_watcher(key_pin, key_name).await
 }
 
 #[embassy_executor::task]
-async fn watch_key2(mut key_pin: Input<'static>) {
-    key_watcher(key_pin).await
+async fn watch_key2(mut key_pin: Input<'static>, key_name: &'static str) {
+    key_watcher(key_pin, key_name).await
+}
+
+#[embassy_executor::task]
+async fn watch_key3(mut key_pin: Input<'static>, key_name: &'static str) {
+    key_watcher(key_pin, key_name).await
+}
+
+#[embassy_executor::task]
+async fn watch_key4(mut key_pin: Input<'static>, key_name: &'static str) {
+    key_watcher(key_pin, key_name).await
+}
+
+#[embassy_executor::task]
+async fn watch_key5(mut key_pin: Input<'static>, key_name: &'static str) {
+    key_watcher(key_pin, key_name).await
+}
+
+#[embassy_executor::task]
+async fn watch_key6(mut key_pin: Input<'static>, key_name: &'static str) {
+    key_watcher(key_pin, key_name).await
 }
 
 #[esp_hal_embassy::main]
@@ -109,21 +129,49 @@ async fn main(spawner: Spawner) {
     //let _ = spawner;
     let res = spawner.spawn(blink_backlight(backlight));
     match res {
-        Ok(_) => info!("spawned successfully"),
+        Ok(_) => info!("spawned backlight blinker"),
         Err(error) => error!("Error spawning task: {error}"),
     }
 
-    let mut key1 = Input::new(peripherals.GPIO14, Pull::Up);
-    let res = spawner.spawn(watch_key(key1));
+    let key1 = Input::new(peripherals.GPIO14, Pull::Up);
+    let res = spawner.spawn(watch_key(key1, "key 1"));
     match res {
-        Ok(_) => info!("spawned successfully"),
+        Ok(_) => info!("spawned key 1"),
         Err(error) => error!("Error spawning task: {error}"),
     }
 
-    let mut key2 = Input::new(peripherals.GPIO21, Pull::Up);
-    let res = spawner.spawn(watch_key2(key2));
+    let key2 = Input::new(peripherals.GPIO21, Pull::Up);
+    let res = spawner.spawn(watch_key2(key2, "key 2"));
     match res {
-        Ok(_) => info!("spawned successfully"),
+        Ok(_) => info!("spawned key 2"),
+        Err(error) => error!("Error spawning task: {error}"),
+    }
+
+    let key3 = Input::new(peripherals.GPIO47, Pull::Up);
+    let res = spawner.spawn(watch_key3(key3, "key 3"));
+    match res {
+        Ok(_) => info!("spawned key 3"),
+        Err(error) => error!("Error spawning task: {error}"),
+    }
+
+    let key4 = Input::new(peripherals.GPIO48, Pull::Up);
+    let res = spawner.spawn(watch_key4(key4, "key 4"));
+    match res {
+        Ok(_) => info!("spawned key 4"),
+        Err(error) => error!("Error spawning task: {error}"),
+    }
+
+    let key5 = Input::new(peripherals.GPIO45, Pull::Up);
+    let res = spawner.spawn(watch_key5(key5, "key 5"));
+    match res {
+        Ok(_) => info!("spawned key 5"),
+        Err(error) => error!("Error spawning task: {error}"),
+    }
+
+    let key6 = Input::new(peripherals.GPIO35, Pull::Up);
+    let res = spawner.spawn(watch_key6(key6, "key 6"));
+    match res {
+        Ok(_) => info!("spawned key 6"),
         Err(error) => error!("Error spawning task: {error}"),
     }
 
