@@ -30,22 +30,30 @@ async fn blink_backlight(mut backlight_pin: Output<'static>) {
     }
 }
 
-#[embassy_executor::task]
-async fn watch_key(mut key_pin: Input<'static>) {
+async fn key_watcher(mut key_pin: Input<'static>) {
     loop {
         let mut del_var = 2000;
 
-        key_pin.wait_for_rising_edge().await;
+        key_pin.wait_for_falling_edge().await;
         info!("key press??");
         del_var = del_var - 300;
         // If updated delay value drops below 300 then reset it back to starting value
         if del_var < 500 {
             del_var = 2000;
         }
-        info!("surpased delay value");
+        info!("surpassed delay value");
         // Pub
     }
+}
 
+#[embassy_executor::task]
+async fn watch_key(mut key_pin: Input<'static>) {
+    key_watcher(key_pin).await
+}
+
+#[embassy_executor::task]
+async fn watch_key2(mut key_pin: Input<'static>) {
+    key_watcher(key_pin).await
 }
 
 #[esp_hal_embassy::main]
@@ -111,8 +119,9 @@ async fn main(spawner: Spawner) {
         Ok(_) => info!("spawned successfully"),
         Err(error) => error!("Error spawning task: {error}"),
     }
+
     let mut key2 = Input::new(peripherals.GPIO21, Pull::Up);
-    let res = spawner.spawn(watch_key(key1));
+    let res = spawner.spawn(watch_key2(key2));
     match res {
         Ok(_) => info!("spawned successfully"),
         Err(error) => error!("Error spawning task: {error}"),
